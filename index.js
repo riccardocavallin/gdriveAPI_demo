@@ -13,10 +13,11 @@ const TOKEN_PATH = 'token.json';
 fs.readFile('credentials.json', (err, content) => {
   if (err) return console.log('Error loading client secret file:', err);
   // Authorize a client with credentials, then call the Google Drive API.
-  authorize(JSON.parse(content), listFiles);
+  // authorize(JSON.parse(content), listFiles);
   //authorize(JSON.parse(content), listAllFiles);
   //authorize(JSON.parse(content), uploadFile);
   //authorize(JSON.parse(content), getFile);
+  authorize(JSON.parse(content), downloadFile);
 });
 
 /**
@@ -34,8 +35,8 @@ function authorize(credentials, callback) {
   fs.readFile(TOKEN_PATH, (err, token) => {
     if (err) return getAccessToken(oAuth2Client, callback);
     oAuth2Client.setCredentials(JSON.parse(token));
-    callback(oAuth2Client);
-    //callback(oAuth2Client, '10nB0m4OhILy6gD22CZbjCAc-Q2EGuEJ7'); //get all info for a specific file
+    // callback(oAuth2Client);
+    callback(oAuth2Client, '148UjgoY0y3ExE0bjsa4hpakj3g6t6nlh'); // has the id of the file to interact with
   });
 }
 
@@ -164,3 +165,50 @@ function getFile(auth, fileId) {
       console.log(res.data); 
   });
 }
+
+// function downloadFile(auth, fileId) {
+//   const drive = google.drive({ version: 'v3', auth });
+//   var dest = fs.createWriteStream('/tmp/photo.jpg');
+//   drive.files.get({
+//     fileId: fileId,
+//     alt: 'media'
+//   })
+//     .on('end', function () {
+//       console.log('Done');
+//     })
+//     .on('error', function (err) {
+//       console.log('Error during download', err);
+//     })
+//     .pipe(dest);
+// }
+
+async function downloadFile(auth, fileId) {
+  const drive = google.drive({ version: 'v3', auth });
+  return drive.files
+    .get({fileId, alt: 'media'}, {responseType: 'stream'})
+    .then(res => {
+      return new Promise((resolve, reject) => {
+        const dest = fs.createWriteStream('/tmp/photo.jpg');
+        let progress = 0;
+
+        res.data
+          .on('end', () => {
+            console.log('\nDone downloading file.');
+          })
+          .on('error', err => {
+            console.error('Error downloading file.');
+            reject(err);
+          })
+          .on('data', d => {
+            progress += d.length;
+            if (process.stdout.isTTY) {
+              process.stdout.clearLine();
+              process.stdout.cursorTo(0);
+              process.stdout.write(`Downloaded ${progress} bytes`);
+            }
+          })
+          .pipe(dest);
+      });
+    });
+}
+
