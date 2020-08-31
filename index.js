@@ -14,10 +14,11 @@ fs.readFile('credentials.json', (err, content) => {
   if (err) return console.log('Error loading client secret file:', err);
   // Authorize a client with credentials, then call the Google Drive API.
   // authorize(JSON.parse(content), listFiles);
-  //authorize(JSON.parse(content), listAllFiles);
-  //authorize(JSON.parse(content), uploadFile);
-  //authorize(JSON.parse(content), getFile);
-  authorize(JSON.parse(content), downloadFile);
+  // authorize(JSON.parse(content), listAllFiles);
+  // authorize(JSON.parse(content), uploadFile);
+  authorize(JSON.parse(content), uploadString);
+  // authorize(JSON.parse(content), getFile);
+  // authorize(JSON.parse(content), downloadFile);
 });
 
 /**
@@ -35,8 +36,8 @@ function authorize(credentials, callback) {
   fs.readFile(TOKEN_PATH, (err, token) => {
     if (err) return getAccessToken(oAuth2Client, callback);
     oAuth2Client.setCredentials(JSON.parse(token));
-    // callback(oAuth2Client);
-    callback(oAuth2Client, '148UjgoY0y3ExE0bjsa4hpakj3g6t6nlh'); // has the id of the file to interact with
+    callback(oAuth2Client);
+    // callback(oAuth2Client, '148UjgoY0y3ExE0bjsa4hpakj3g6t6nlh'); // has the id of the file to interact with
   });
 }
 
@@ -155,6 +156,34 @@ function uploadFile(auth) {
       } else {
           console.log('File Id: ', res.data.id);
       }
+  });
+}
+
+function uploadString(auth) {
+  const drive = google.drive({ version: 'v3', auth });
+  // Set file metadata and data
+  message = 'This is a simple String nice to meet you';
+  const fileMetadata = {'name': 'uploadSimpleStringt.csv'};
+  const media = {
+    mimeType: 'text/csv',
+    body: message
+  };
+  // Return the Promise result after completing its task
+  return new Promise((resolve, reject) => {
+    try{
+      // Call Files: create endpoint
+      return drive.files.create({
+        resource: fileMetadata,
+        media: media,
+        fields: 'id'
+      },(err, results) => { 
+        // Result from the call
+        if(err) reject(`Drive error: ${err.message}`);
+        resolve(results);
+      })
+    } catch (error){
+      console.log(`There was a problem in the promise: ${error}`);
+    }
   });
 }
 
