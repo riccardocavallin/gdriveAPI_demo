@@ -1,4 +1,4 @@
-# gdriveAPI_test
+# gdriveAPI_demo
 Test delle API di Google Drive con Node.js
 
 Per effettuare il caricamento tramite Google Drive è necessario dare l'autorizzazione per l'accesso al proprio account. 
